@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>快递单号条形码生成器</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --card: #fff;
+            --text: #1d1d1f;
+            --sub: #86868b;
+            --blue: #007aff;
+            --border: rgba(0,0,0,0.06);
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+            --radius: 16px;
+            --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        .input-group {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--sub);
+            margin-bottom: 8px;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: var(--font);
+            font-size: 16px;
+            outline: none;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary {
+            background: var(--blue);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+        }
+        .btn-primary:hover { background: #0066d6; }
+
+        /* 条形码展示区 */
+        .barcode-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+            display: none;
+            margin-bottom: 16px;
+        }
+        .barcode-card.show { display: block; }
+        .barcode-card svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .tracking-text {
+            font-size: 18px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin-top: 12px;
+            letter-spacing: 1px;
+            word-break: break-all;
+        }
+        .carrier-label {
+            font-size: 13px;
+            color: var(--sub);
+            margin-bottom: 12px;
+        }
+
+        /* 历史记录 */
+        .history-section {
+            margin-top: 8px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .history-clear {
+            font-size: 13px;
+            color: var(--blue);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: var(--font);
+            padding: 4px 8px;
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .history-item:active { background: var(--bg); }
+        .history-item .num {
+            font-size: 15px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.5px;
+        }
+        .history-item .time {
+            font-size: 12px;
+            color: var(--sub);
+        }
+
+        /* 打印样式 */
+        @media print {
+            body { background: #fff; }
+            .app { padding: 0; max-width: 100%; }
+            h1, .input-group, .history-section { display: none !important; }
+            .barcode-card {
+                display: block !important;
+                box-shadow: none;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* 深色模式 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000;
+                --card: #1c1c1e;
+                --text: #f5f5f7;
+                --sub: #98989d;
+                --border: rgba(255,255,255,0.08);
+                --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+            }
+            input[type="text"] { background: #2c2c2e; color: var(--text); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <h1>条形码生成器</h1>
+
+        <div class="input-group">
+            <label>快递单号</label>
+            <div class="input-row">
+                <input type="text" id="trackingInput" placeholder="输入快递单号" autocomplete="off" autocorrect="off" spellcheck="false">
+                <button class="btn btn-primary" id="generateBtn">生成</button>
+            </div>
+        </div>
+
+        <div class="barcode-card" id="barcodeCard">
+            <div class="carrier-label" id="carrierLabel"></div>
+            <svg id="barcode"></svg>
+            <div class="tracking-text" id="trackingText"></div>
+        </div>
+
+        <div class="history-section" id="historySection" style="display:none;">
+            <div class="history-header">
+                <h3>历史记录</h3>
+                <button class="history-clear" id="clearHistory">清除</button>
+            </div>
+            <div class="history-list" id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        var input = document.getElementById('trackingInput');
+        var btn = document.getElementById('generateBtn');
+        var card = document.getElementById('barcodeCard');
+        var svg = document.getElementById('barcode');
+        var textEl = document.getElementById('trackingText');
+        var carrierEl = document.getElementById('carrierLabel');
+        var historySection = document.getElementById('historySection');
+        var historyList = document.getElementById('historyList');
+        var clearBtn = document.getElementById('clearHistory');
+
+        // 快递公司识别
+        var carriers = [
+            { name: '顺丰', test: /^sf/i },
+            { name: '圆通', test: /^yt/i },
+            { name: '中通', test: /^7[56]/ },
+            { name: '韵达', test: /^1[01]\d{11}/ },
+            { name: '申通', test: /^7[78]/ },
+            { name: '极兔', test: /^jt/i },
+            { name: '京东', test: /^jd/i },
+            { name: 'EMS', test: /^e[a-z]\d/i },
+            { name: '邮政', test: /^11\d{13}/ },
+        ];
+
+        function guessCarrier(num) {
+            for (var i = 0; i < carriers.length; i++) {
+                if (carriers[i].test.test(num)) return carriers[i].name;
+            }
+            return '';
+        }
+
+        function generate() {
+            var val = input.value.trim().replace(/\s+/g, '');
+            if (!val) return;
+
+            try {
+                JsBarcode('#barcode', val, {
+                    format: 'CODE128',
+                    width: 2.5,
+                    height: 100,
+                    displayValue: false,
+                    margin: 10,
+                    background: 'transparent',
+                    lineColor: '#000'
+                });
+
+                var carrier = guessCarrier(val);
+                carrierEl.textContent = carrier ? carrier + ' 快递' : '';
+                textEl.textContent = val;
+                card.classList.add('show');
+
+                // 深色模式下条形码颜色反转
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    var lines = svg.querySelectorAll('rect');
+                    lines.forEach(function(r) {
+                        if (r.getAttribute('fill') === '#000') r.setAttribute('fill', '#f5f5f7');
+                    });
+                    svg.style.background = '#1c1c1e';
+                }
+
+                saveHistory(val);
+                renderHistory();
+            } catch (e) {
+                alert('生成失败：' + e.message);
+            }
+        }
+
+        btn.addEventListener('click', generate);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') generate();
+        });
+
+        // 历史记录
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem('barcode_history') || '[]'); } catch(e) { return []; }
+        }
+        function saveHistory(num) {
+            var list = getHistory().filter(function(h) { return h.num !== num; });
+            list.unshift({ num: num, time: Date.now() });
+            if (list.length > 20) list = list.slice(0, 20);
+            localStorage.setItem('barcode_history', JSON.stringify(list));
+        }
+        function renderHistory() {
+            var list = getHistory();
+            if (list.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            historySection.style.display = '';
+            historyList.innerHTML = '';
+            list.forEach(function(item) {
+                var div = document.createElement('div');
+                div.className = 'history-item';
+                var d = new Date(item.time);
+                var timeStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+                div.innerHTML = '<span class="num">' + item.num + '</span><span class="time">' + timeStr + '</span>';
+                div.addEventListener('click', function() {
+                    input.value = item.num;
+                    generate();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                historyList.appendChild(div);
+            });
+        }
+        clearBtn.addEventListener('click', function() {
+            localStorage.removeItem('barcode_history');
+            renderHistory();
+        });
+
+        // 页面加载时渲染历史
+        renderHistory();
+
+        // 深色模式条形码适配
+        var darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+        darkMQ.addEventListener('change', function() { if (card.classList.contains('show')) generate(); });
+    </script>
+</body>
+</html>
