@@ -5,19 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>快递单号条形码生成器</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f5f5f7;
-            --card: #fff;
-            --text: #1d1d1f;
-            --sub: #86868b;
-            --blue: #007aff;
-            --border: rgba(0,0,0,0.06);
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-            --radius: 16px;
-            --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            --bg: #f2f2f7;
+            --card: #ffffff;
+            --card-hover: #fafafa;
+            --text: #1c1c1e;
+            --text-secondary: #8e8e93;
+            --text-tertiary: #aeaeb2;
+            --accent: #007aff;
+            --accent-light: rgba(0, 122, 255, 0.08);
+            --accent-glow: rgba(0, 122, 255, 0.18);
+            --border: rgba(0, 0, 0, 0.04);
+            --border-focus: rgba(0, 122, 255, 0.3);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(0, 0, 0, 0.06);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --barcode-bg: #ffffff;
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+            --transition: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: var(--font);
             background: var(--bg);
@@ -25,35 +40,73 @@
             min-height: 100vh;
             min-height: 100dvh;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+
         .app {
-            max-width: 480px;
+            max-width: 440px;
             margin: 0 auto;
-            padding: 20px;
-            padding-top: env(safe-area-inset-top, 20px);
-            padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+            padding: 24px 20px;
+            padding-top: calc(env(safe-area-inset-top, 24px) + 8px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 24px);
         }
-        h1 {
+
+        /* Header */
+        .header {
             text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
+            margin-bottom: 32px;
+            animation: fadeDown 0.5s ease-out;
         }
-        .input-group {
+        .header-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent), #5856d6);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.25);
+        }
+        .header-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
+        .header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Input Card */
+        .input-card {
             background: var(--card);
-            border-radius: var(--radius);
-            padding: 16px;
-            box-shadow: var(--shadow);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-md);
             border: 1px solid var(--border);
             margin-bottom: 16px;
+            animation: fadeUp 0.5s ease-out;
         }
-        .input-group label {
+        .input-card label {
             display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--sub);
-            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
         }
         .input-row {
             display: flex;
@@ -61,92 +114,205 @@
         }
         input[type="text"] {
             flex: 1;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
             font-family: var(--font);
             font-size: 16px;
+            font-weight: 500;
             outline: none;
             background: var(--bg);
             color: var(--text);
-            transition: border-color 0.2s;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        input[type="text"]::placeholder {
+            color: var(--text-tertiary);
+            font-weight: 400;
         }
         input[type="text"]:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
         .btn {
-            padding: 12px 20px;
+            padding: 14px 22px;
             border: none;
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             font-family: var(--font);
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all var(--transition);
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .btn:active { transform: scale(0.97); }
+        .btn:active { transform: scale(0.96); }
         .btn-primary {
-            background: var(--blue);
+            background: linear-gradient(135deg, #007aff, #5856d6);
             color: #fff;
-            box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+            box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
         }
-        .btn-primary:hover { background: #0066d6; }
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(0) scale(0.97);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+        }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
-        /* 条形码展示区 */
+        /* Barcode Card */
         .barcode-card {
             background: var(--card);
-            border-radius: var(--radius);
-            padding: 24px 16px;
-            box-shadow: var(--shadow);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
-            text-align: center;
+            overflow: hidden;
             display: none;
             margin-bottom: 16px;
+            animation: barcodeEntry 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .barcode-card.show { display: block; }
-        .barcode-card svg {
-            max-width: 100%;
-            height: auto;
+
+        .barcode-header {
+            padding: 16px 20px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
         }
-        .tracking-text {
-            font-size: 18px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            margin-top: 12px;
-            letter-spacing: 1px;
-            word-break: break-all;
-        }
-        .carrier-label {
+        .carrier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 20px;
             font-size: 13px;
-            color: var(--sub);
-            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .carrier-badge.hidden { display: none; }
+        .carrier-badge svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+        .barcode-actions {
+            display: flex;
+            gap: 4px;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .btn-icon:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+        .btn-icon:active {
+            transform: scale(0.9);
+        }
+        .btn-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .btn-icon.copied {
+            color: #34c759;
         }
 
-        /* 历史记录 */
+        .barcode-body {
+            padding: 24px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .barcode-wrap {
+            background: var(--barcode-bg);
+            border-radius: var(--radius-sm);
+            padding: 20px 16px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+            max-width: 100%;
+        }
+        .barcode-wrap svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .barcode-footer {
+            padding: 14px 20px 18px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .tracking-number {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        /* History */
         .history-section {
             margin-top: 8px;
+            animation: fadeUp 0.5s ease-out 0.1s both;
         }
         .history-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            padding: 0 4px;
         }
         .history-header h3 {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
         }
         .history-clear {
             font-size: 13px;
-            color: var(--blue);
+            font-weight: 500;
+            color: var(--accent);
             cursor: pointer;
             background: none;
             border: none;
             font-family: var(--font);
             padding: 4px 8px;
+            border-radius: 8px;
+            transition: background var(--transition);
+        }
+        .history-clear:hover {
+            background: var(--accent-light);
         }
         .history-list {
             display: flex;
@@ -155,72 +321,205 @@
         }
         .history-item {
             background: var(--card);
-            border-radius: 12px;
-            padding: 12px 16px;
-            box-shadow: var(--shadow);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-sm);
             border: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: all var(--transition);
             -webkit-tap-highlight-color: transparent;
         }
-        .history-item:active { background: var(--bg); }
+        .history-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .history-item:active {
+            transform: translateY(0) scale(0.99);
+            background: var(--bg);
+        }
+        .history-item .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .history-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
         .history-item .num {
-            font-size: 15px;
+            font-family: var(--font-mono);
+            font-size: 14px;
             font-weight: 500;
-            font-variant-numeric: tabular-nums;
             letter-spacing: 0.5px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .history-item .time {
             font-size: 12px;
-            color: var(--sub);
+            font-weight: 500;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            margin-left: 12px;
         }
 
-        /* 打印样式 */
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        /* Print */
         @media print {
             body { background: #fff; }
             .app { padding: 0; max-width: 100%; }
-            h1, .input-group, .history-section { display: none !important; }
+            .header, .input-card, .history-section, .barcode-header, .barcode-actions, .toast { display: none !important; }
             .barcode-card {
                 display: block !important;
                 box-shadow: none;
-                border: 1px solid #ccc;
+                border: 1px solid #ddd;
+                border-radius: 8px;
                 page-break-inside: avoid;
+            }
+            .barcode-wrap { box-shadow: none; }
+            .barcode-footer { border-top: 1px solid #eee; }
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --card: #1c1c1e;
+                --card-hover: #2c2c2e;
+                --text: #f5f5f7;
+                --text-secondary: #98989d;
+                --text-tertiary: #636366;
+                --accent: #0a84ff;
+                --accent-light: rgba(10, 132, 255, 0.12);
+                --accent-glow: rgba(10, 132, 255, 0.25);
+                --border: rgba(255, 255, 255, 0.06);
+                --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+                --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15);
+                --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.2);
+                --barcode-bg: #ffffff;
+            }
+            input[type="text"] {
+                background: #2c2c2e;
+                color: var(--text);
+                border-color: rgba(255, 255, 255, 0.08);
+            }
+            .toast {
+                background: #2c2c2e;
+                color: #f5f5f7;
             }
         }
 
-        /* 深色模式 */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #000;
-                --card: #1c1c1e;
-                --text: #f5f5f7;
-                --sub: #98989d;
-                --border: rgba(255,255,255,0.08);
-                --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+        /* Animations */
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes barcodeEntry {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
             }
-            input[type="text"] { background: #2c2c2e; color: var(--text); }
         }
     </style>
 </head>
 <body>
     <div class="app">
-        <h1>条形码生成器</h1>
+        <div class="header">
+            <div class="header-icon">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <line x1="7" y1="8" x2="7" y2="16"/>
+                    <line x1="10" y1="8" x2="10" y2="16"/>
+                    <line x1="13" y1="8" x2="13" y2="16"/>
+                    <line x1="16" y1="8" x2="16" y2="16"/>
+                </svg>
+            </div>
+            <h1>条形码生成器</h1>
+            <p>输入快递单号，生成可扫描的 CODE128 条形码</p>
+        </div>
 
-        <div class="input-group">
+        <div class="input-card">
             <label>快递单号</label>
             <div class="input-row">
                 <input type="text" id="trackingInput" placeholder="输入快递单号" autocomplete="off" autocorrect="off" spellcheck="false">
-                <button class="btn btn-primary" id="generateBtn">生成</button>
+                <button class="btn btn-primary" id="generateBtn">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    生成
+                </button>
             </div>
         </div>
 
         <div class="barcode-card" id="barcodeCard">
-            <div class="carrier-label" id="carrierLabel"></div>
-            <svg id="barcode"></svg>
-            <div class="tracking-text" id="trackingText"></div>
+            <div class="barcode-header">
+                <div class="carrier-badge hidden" id="carrierBadge">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <span id="carrierLabel"></span>
+                </div>
+                <div class="barcode-actions">
+                    <button class="btn-icon" id="copyBtn" title="复制单号">
+                        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    </button>
+                    <button class="btn-icon" id="printBtn" title="打印">
+                        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="barcode-body">
+                <div class="barcode-wrap">
+                    <svg id="barcode"></svg>
+                </div>
+            </div>
+            <div class="barcode-footer">
+                <div class="tracking-number" id="trackingText"></div>
+            </div>
         </div>
 
         <div class="history-section" id="historySection" style="display:none;">
@@ -232,28 +531,35 @@
         </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
         var input = document.getElementById('trackingInput');
         var btn = document.getElementById('generateBtn');
         var card = document.getElementById('barcodeCard');
         var svg = document.getElementById('barcode');
         var textEl = document.getElementById('trackingText');
-        var carrierEl = document.getElementById('carrierLabel');
+        var carrierBadge = document.getElementById('carrierBadge');
+        var carrierLabel = document.getElementById('carrierLabel');
+        var copyBtn = document.getElementById('copyBtn');
+        var printBtn = document.getElementById('printBtn');
         var historySection = document.getElementById('historySection');
         var historyList = document.getElementById('historyList');
         var clearBtn = document.getElementById('clearHistory');
+        var toastEl = document.getElementById('toast');
+        var currentVal = '';
 
         // 快递公司识别
         var carriers = [
-            { name: '顺丰', test: /^sf/i },
-            { name: '圆通', test: /^yt/i },
-            { name: '中通', test: /^7[56]/ },
-            { name: '韵达', test: /^1[01]\d{11}/ },
-            { name: '申通', test: /^7[78]/ },
-            { name: '极兔', test: /^jt/i },
-            { name: '京东', test: /^jd/i },
+            { name: '顺丰速运', test: /^sf/i },
+            { name: '圆通速递', test: /^yt/i },
+            { name: '中通快递', test: /^7[56]/ },
+            { name: '韵达快递', test: /^1[01]\d{11}/ },
+            { name: '申通快递', test: /^7[78]/ },
+            { name: '极兔速递', test: /^jt/i },
+            { name: '京东物流', test: /^jd/i },
             { name: 'EMS', test: /^e[a-z]\d/i },
-            { name: '邮政', test: /^11\d{13}/ },
+            { name: '中国邮政', test: /^11\d{13}/ },
         ];
 
         function guessCarrier(num) {
@@ -263,9 +569,18 @@
             return '';
         }
 
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
+        }
+
         function generate() {
             var val = input.value.trim().replace(/\s+/g, '');
-            if (!val) return;
+            if (!val) {
+                input.focus();
+                return;
+            }
 
             try {
                 JsBarcode('#barcode', val, {
@@ -273,29 +588,28 @@
                     width: 2.5,
                     height: 100,
                     displayValue: false,
-                    margin: 10,
+                    margin: 0,
                     background: 'transparent',
-                    lineColor: '#000'
+                    lineColor: '#1c1c1e'
                 });
 
                 var carrier = guessCarrier(val);
-                carrierEl.textContent = carrier ? carrier + ' 快递' : '';
-                textEl.textContent = val;
-                card.classList.add('show');
-
-                // 深色模式下条形码颜色反转
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    var lines = svg.querySelectorAll('rect');
-                    lines.forEach(function(r) {
-                        if (r.getAttribute('fill') === '#000') r.setAttribute('fill', '#f5f5f7');
-                    });
-                    svg.style.background = '#1c1c1e';
+                if (carrier) {
+                    carrierLabel.textContent = carrier;
+                    carrierBadge.classList.remove('hidden');
+                } else {
+                    carrierBadge.classList.add('hidden');
                 }
+
+                textEl.textContent = val;
+                currentVal = val;
+                card.classList.add('show');
 
                 saveHistory(val);
                 renderHistory();
+                input.blur();
             } catch (e) {
-                alert('生成失败：' + e.message);
+                showToast('生成失败：' + e.message);
             }
         }
 
@@ -303,6 +617,23 @@
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') generate();
         });
+
+        // 复制
+        copyBtn.addEventListener('click', function() {
+            if (!currentVal) return;
+            navigator.clipboard.writeText(currentVal).then(function() {
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+                showToast('已复制单号');
+                setTimeout(function() {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+                }, 1500);
+            });
+        });
+
+        // 打印
+        printBtn.addEventListener('click', function() { window.print(); });
 
         // 历史记录
         function getHistory() {
@@ -326,8 +657,14 @@
                 var div = document.createElement('div');
                 div.className = 'history-item';
                 var d = new Date(item.time);
-                var timeStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-                div.innerHTML = '<span class="num">' + item.num + '</span><span class="time">' + timeStr + '</span>';
+                var now = new Date();
+                var timeStr;
+                if (d.toDateString() === now.toDateString()) {
+                    timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+                } else {
+                    timeStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+                }
+                div.innerHTML = '<div class="left"><span class="history-dot"></span><span class="num">' + item.num + '</span></div><span class="time">' + timeStr + '</span>';
                 div.addEventListener('click', function() {
                     input.value = item.num;
                     generate();
@@ -339,14 +676,10 @@
         clearBtn.addEventListener('click', function() {
             localStorage.removeItem('barcode_history');
             renderHistory();
+            showToast('历史记录已清除');
         });
 
-        // 页面加载时渲染历史
         renderHistory();
-
-        // 深色模式条形码适配
-        var darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
-        darkMQ.addEventListener('change', function() { if (card.classList.contains('show')) generate(); });
     </script>
 </body>
 </html>
