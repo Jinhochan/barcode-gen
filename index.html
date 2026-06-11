@@ -162,6 +162,20 @@
             transform: translateY(0) scale(0.97);
             box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
         }
+        .btn-paste {
+            background: var(--card);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 14px;
+        }
+        .btn-paste:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-paste:active {
+            background: var(--bg);
+        }
         .btn svg {
             width: 18px;
             height: 18px;
@@ -483,13 +497,16 @@
                 </svg>
             </div>
             <h1>条形码生成器</h1>
-            <p>输入快递单号，生成可扫描的 CODE128 条形码</p>
+            <p>复制快递单号后打开页面，自动生成条形码</p>
         </div>
 
         <div class="input-card">
             <label>快递单号</label>
             <div class="input-row">
                 <input type="text" id="trackingInput" placeholder="输入快递单号" autocomplete="off" autocorrect="off" spellcheck="false">
+                <button class="btn btn-paste" id="pasteBtn" title="从剪贴板粘贴">
+                    <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>
+                </button>
                 <button class="btn btn-primary" id="generateBtn">
                     <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     生成
@@ -548,6 +565,7 @@
         var clearBtn = document.getElementById('clearHistory');
         var toastEl = document.getElementById('toast');
         var currentVal = '';
+        var pasteBtn = document.getElementById('pasteBtn');
 
         // 快递公司识别
         var carriers = [
@@ -617,6 +635,52 @@
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') generate();
         });
+
+        // 粘贴按钮
+        pasteBtn.addEventListener('click', function() {
+            readClipboardAndGenerate();
+        });
+
+        // 读取剪贴板并自动生成
+        function readClipboardAndGenerate() {
+            if (!navigator.clipboard || !navigator.clipboard.readText) {
+                showToast('此浏览器不支持剪贴板读取');
+                return;
+            }
+            navigator.clipboard.readText().then(function(text) {
+                var cleaned = text.trim().replace(/\s+/g, '');
+                if (cleaned && cleaned.length >= 6) {
+                    input.value = cleaned;
+                    generate();
+                    showToast('已从剪贴板读取');
+                } else {
+                    showToast('剪贴板中没有快递单号');
+                }
+            }).catch(function() {
+                showToast('请允许剪贴板权限');
+            });
+        }
+
+        // 页面加载时自动读取剪贴板
+        (function autoReadClipboard() {
+            var triggered = false;
+            function tryRead() {
+                if (triggered) return;
+                triggered = true;
+                if (input.value.trim()) return;
+                setTimeout(readClipboardAndGenerate, 300);
+            }
+            // 从其他app切回页面时自动读取
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible' && !card.classList.contains('show')) {
+                    triggered = false;
+                    tryRead();
+                }
+            });
+            // 首次交互时读取
+            document.addEventListener('touchstart', tryRead, { once: true });
+            document.addEventListener('click', tryRead, { once: true });
+        })();
 
         // 复制
         copyBtn.addEventListener('click', function() {
